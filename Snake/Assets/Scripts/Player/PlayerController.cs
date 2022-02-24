@@ -2,13 +2,19 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
+using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Quaternion = UnityEngine.Quaternion;
 using Random = UnityEngine.Random;
 using Vector3 = UnityEngine.Vector3;
 
 public class PlayerController : MonoBehaviour
 {
 
+    public TMP_Text pointsText;
+    public int pointCount = 0;
+    
     public PlayerDirection direction;
 
     public float step_Length = 0.2f;
@@ -105,7 +111,12 @@ public class PlayerController : MonoBehaviour
 
         if (create_Node_At_Tail)
         {
+            create_Node_At_Tail = false;
+
+            GameObject newNode = Instantiate(tailPrefab, nodes[nodes.Count - 1].position, Quaternion.identity);
             
+            newNode.transform.SetParent(transform, true);
+            nodes.Add(newNode.GetComponent<Rigidbody>());
         }
     }
 
@@ -124,6 +135,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         CheckMovementFrequency();
+        showPoints();
     }
 
     private void FixedUpdate()
@@ -156,5 +168,31 @@ public class PlayerController : MonoBehaviour
         counter = 0;
         move = false;
         Move();
+    }
+
+    private void OnTriggerEnter(Collider target)
+    {
+        if (target.tag == Tags.BEAN)
+        {
+            target.gameObject.SetActive(false);
+
+            create_Node_At_Tail = true;
+            
+            pointCount += 1;
+            
+            GameController.instance.IncreaseScore();
+            
+            Destroy(target.gameObject);
+        }
+        
+        if (target.tag == Tags.WALL) //|| //target.tag == Tags.TAIL)
+        {
+            SceneManager.LoadScene(0);
+        }
+    }
+    
+    private void showPoints()
+    {
+        pointsText.text = String.Format("{0}", pointCount);
     }
 }
